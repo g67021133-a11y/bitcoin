@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GLITCH EXCHANGE — Crypto Simulator</title>
+<style>
+:root{--bg:#090d12;--panel:#111821;--panel2:#151f2a;--line:#263341;--muted:#8b9aaa;--text:#edf4fb;--green:#20d69a;--red:#ff647c;--blue:#66a8ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 15% 0%,#142331 0,transparent 38%),var(--bg);color:var(--text);font:14px Inter,system-ui,Segoe UI,Arial,sans-serif}
+button,input,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:9px;padding:10px 14px;font-weight:700;background:var(--green);color:#06130f}button.secondary{background:#202d3a;color:var(--text);border:1px solid var(--line)}button.danger{background:#48212b;color:#ffdce2}
+header{height:68px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 4%;background:#0a1018dd;position:sticky;top:0;z-index:5;backdrop-filter:blur(12px)}
+.logo{font-weight:900;letter-spacing:1.5px;font-size:18px}.logo span{color:var(--green)}.status{color:var(--green);font-size:12px}
+main{max-width:1250px;margin:28px auto;padding:0 20px}.top{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}.stat,.panel{background:linear-gradient(145deg,#141e29,#101720);border:1px solid var(--line);border-radius:14px;padding:18px}.stat small,.muted{color:var(--muted)}.stat strong{display:block;font-size:25px;margin-top:8px}.green{color:var(--green)}.red{color:var(--red)}
+.layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(280px,.9fr);gap:16px}.panel h2{font-size:16px;margin:0 0 15px}.market-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+table{width:100%;border-collapse:collapse}th{text-align:left;color:var(--muted);font-size:11px;font-weight:600;padding:10px 8px}td{padding:13px 8px;border-top:1px solid #202c38}tr.asset{cursor:pointer}tr.asset:hover,tr.asset.selected{background:#1a2934}.coin{display:flex;align-items:center;gap:10px;font-weight:700}.coin-icon{width:31px;height:31px;border-radius:50%;display:grid;place-items:center;background:#263646;color:#a8d4ff;font-size:12px}
+.chart-wrap{height:190px;margin:10px 0 4px;position:relative}canvas{width:100%;height:100%}.detail{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}.price{font-size:27px;font-weight:800}.trade-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.field{display:flex;flex-direction:column;gap:6px;margin:10px 0}.field label{color:var(--muted);font-size:12px}.field input,.field textarea{width:100%;background:#0b121a;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:11px;outline:none}.field input:focus,.field textarea:focus{border-color:var(--blue)}.trade-grid button{width:100%}.tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}.tab{background:transparent;color:var(--muted);border:1px solid var(--line)}.tab.active{background:#18372f;color:var(--green);border-color:#23634e}.wide{width:100%}.bottom{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}.list{max-height:210px;overflow:auto}.item{display:flex;justify-content:space-between;gap:10px;padding:11px 0;border-top:1px solid #202c38}.empty{color:var(--muted);padding:18px 0}.note{font-size:11px;color:var(--muted);line-height:1.5;margin-top:12px}.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#203342;border:1px solid #3a566a;padding:12px 18px;border-radius:10px;display:none;z-index:10}.hidden{display:none!important}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.top{grid-template-columns:1fr 1fr}.top .stat:last-child{grid-column:span 2}.bottom{grid-template-columns:1fr}header{padding:0 16px}main{padding:0 12px;margin:18px auto}.table-wrap{overflow-x:auto}table{min-width:500px}}
+</style>
+</head>
+<body>
+<header><div class="logo">GLITCH <span>EXCHANGE</span></div><div class="status">● SIMULATION MODE</div></header>
+<main>
+<div class="top">
+ <div class="stat"><small>Доступный баланс</small><strong id="cash">$10,000.00</strong></div>
+ <div class="stat"><small>Стоимость портфеля</small><strong id="portfolio">$0.00</strong></div>
+ <div class="stat"><small>Общий результат</small><strong id="pnl">$0.00</strong></div>
+</div>
+<div class="layout">
+<section>
+ <div class="panel">
+  <div class="market-head"><h2>Рынок</h2><span class="muted" id="marketCount">3 актива</span></div>
+  <div class="table-wrap"><table><thead><tr><th>АКТИВ</th><th>ЦЕНА</th><th>24Ч</th><th>У ВАС</th></tr></thead><tbody id="market"></tbody></table></div>
+ </div>
+ <div class="panel" style="margin-top:16px">
+  <div class="detail"><div><div class="muted" id="selectedName">Bitcoin · BTC</div><div class="price" id="selectedPrice">$67,000.00</div></div><div id="selectedChange" class="green">+0.00%</div></div>
+  <div class="chart-wrap"><canvas id="chart"></canvas></div>
+  <div class="muted" style="font-size:11px">Условный график симуляции · обновляется автоматически</div>
+ </div>
+</section>
+<aside>
+ <div class="panel">
+  <h2>Торговля</h2>
+  <div class="tabs"><button class="tab active" id="buyTab">Купить</button><button class="tab" id="sellTab">Продать</button></div>
+  <div class="field"><label>Монета</label><input id="tradeCoin" value="BTC" readonly></div>
+  <div class="field"><label>Количество</label><input id="tradeAmount" type="number" min="0" step="any" placeholder="Например, 0.05"></div>
+  <div class="muted" id="estimate">Сумма: $0.00</div>
+  <button class="wide" id="tradeButton">Купить</button>
+  <p class="note">Комиссия симулятора: 0,5%. Сделки влияют на цену выбранной монеты.</p>
+ </div>
+ <div class="panel" style="margin-top:16px">
+  <h2>Создать монету</h2>
+  <div class="field"><label>Название</label><input id="newName" maxlength="24" placeholder="Например, Glitch Coin"></div>
+  <div class="field"><label>Тикер (2–6 символов)</label><input id="newTicker" maxlength="6" placeholder="GLT"></div>
+  <div class="field"><label>Начальная цена ($)</label><input id="newPrice" type="number" min="0.01" max="10000" step="0.01" placeholder="10"></div>
+  <div class="field"><label>Количество монет</label><input id="newSupply" type="number" min="1000" max="1000000" step="1" placeholder="100000"></div>
+  <button class="wide" id="createCoin">Выпустить монету</button>
+  <p class="note">Лимиты: до 3 созданных монет, уникальный тикер, цена $0.01–$10,000, выпуск 1,000–1,000,000 единиц.</p>
+ </div>
+</aside>
+</div>
+<div class="bottom">
+ <div class="panel"><h2>Ваш портфель</h2><div id="holdings" class="list"><div class="empty">Пока у вас нет монет.</div></div></div>
+ <div class="panel"><h2>История операций</h2><div id="history" class="list"><div class="empty">Сделок пока нет.</div></div></div>
+</div>
+<p class="note">GLITCH EXCHANGE — учебный симулятор. Все цены, балансы и сделки виртуальные, не связаны с реальными криптовалютами. Данные сохраняются только в этом браузере на этом устройстве.</p>
+</main><div class="toast" id="toast"></div>
+<script>
+const initial=[
+ {id:'BTC',name:'Bitcoin',ticker:'BTC',price:67000,supply:21000000,owned:0,created:false,history:[67000]},
+ {id:'ETH',name:'Ethereum',ticker:'ETH',price:3400,supply:120000000,owned:0,created:false,history:[3400]},
+ {id:'SOL',name:'Solana',ticker:'SOL',price:155,supply:500000000,owned:0,created:false,history:[155]}
+];
+let state=JSON.parse(localStorage.getItem('glitchExchangeSave')||'null')||{cash:10000,coins:initial,transactions:[],selected:'BTC',mode:'buy',created:0};
+let coins=state.coins, selected=state.selected||coins[0].id, mode='buy';
+const $=id=>document.getElementById(id), money=n=>'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+function save(){state={cash:state.cash,coins,transactions:state.transactions,selected,created:coins.filter(c=>c.created).length};localStorage.setItem('glitchExchangeSave',JSON.stringify(state))}
+function toast(s){$('toast').textContent=s;$('toast').style.display='block';setTimeout(()=>$('toast').style.display='none',2300)}
+function current(){return coins.find(c=>c.id===selected)||coins[0]}
+function total(){return coins.reduce((s,c)=>s+c.owned*c.price,0)}
+function render(){
+ $('cash').textContent=money(state.cash);$('portfolio').textContent=money(total());let pnl=state.cash+total()-10000;$('pnl').textContent=(pnl>=0?'+':'')+money(pnl);$('pnl').className=pnl>=0?'green':'red';
+ $('marketCount').textContent=coins.length+' актив(а)';
+ $('market').innerHTML=coins.map(c=>{let ch=change(c),cls=ch>=0?'green':'red';return `<tr class="asset ${c.id===selected?'selected':''}" data-id="${c.id}"><td><div class="coin"><span class="coin-icon">${c.ticker.slice(0,2)}</span><span>${c.name}<br><small class="muted">${c.ticker}</small></span></div></td><td>${money(c.price)}</td><td class="${cls}">${ch>=0?'+':''}${ch.toFixed(2)}%</td><td>${c.owned.toFixed(4)}</td></tr>`}).join('');
+ document.querySelectorAll('tr.asset').forEach(tr=>tr.onclick=()=>{selected=tr.dataset.id;render()});
+ let c=current(),ch=change(c);$('selectedName').textContent=c.name+' · '+c.ticker;$('selectedPrice').textContent=money(c.price);$('selectedChange').textContent=(ch>=0?'+':'')+ch.toFixed(2)+'%';$('selectedChange').className=ch>=0?'green':'red';$('tradeCoin').value=c.ticker;
+ $('buyTab').classList.toggle('active',mode==='buy');$('sellTab').classList.toggle('active',mode==='sell');$('tradeButton').textContent=mode==='buy'?'Купить':'Продать';$('tradeButton').className=mode==='buy'?'wide':'wide danger';
+ $('holdings').innerHTML=coins.filter(c=>c.owned>0).map(c=>`<div class="item"><span><b>${c.ticker}</b><br><small class="muted">${c.owned.toFixed(5)} шт.</small></span><b>${money(c.owned*c.price)}</b></div>`).join('')||'<div class="empty">Пока у вас нет монет.</div>';
+ $('history').innerHTML=state.transactions.slice(0,15).map(t=>`<div class="item"><span><b class="${t.type==='BUY'?'green':'red'}">${t.type==='BUY'?'ПОКУПКА':'ПРОДАЖА'} ${t.ticker}</b><br><small class="muted">${t.amount.toFixed(5)} шт. · ${t.time}</small></span><b>${money(t.total)}</b></div>`).join('')||'<div class="empty">Сделок пока нет.</div>';
+ $('estimate').textContent='Сумма: '+money((Number($('tradeAmount').value)||0)*c.price);
+ drawChart(c);save();
+}
+function change(c){let h=c.history;return h.length>1?(c.price/h[0]-1)*100:0}
+$('tradeAmount').addEventListener('input',()=>{$('estimate').textContent='Сумма: '+money((Number($('tradeAmount').value)||0)*current().price)});
+$('buyTab').onclick=()=>{mode='buy';render()};$('sellTab').onclick=()=>{mode='sell';render()};
+$('tradeButton').onclick=()=>{
+ let c=current(),amount=Number($('tradeAmount').value);if(!Number.isFinite(amount)||amount<=0)return toast('Введите корректное количество');
+ let value=amount*c.price,fee=value*.005;
+ if(mode==='buy'){if(state.cash<value+fee)return toast('Недостаточно виртуальных долларов');state.cash-=value+fee;c.owned+=amount;c.price*=1+Math.min(.025,amount/(c.supply||1000000)*8);}
+ else{if(c.owned<amount)return toast('У вас недостаточно этой монеты');c.owned-=amount;state.cash+=value-fee;c.price*=1-Math.min(.025,amount/(c.supply||1000000)*8);}
+ c.history.push(c.price);state.transactions.unshift({type:mode==='buy'?'BUY':'SELL',ticker:c.ticker,amount,total:value,time:new Date().toLocaleTimeString()});$('tradeAmount').value='';toast(mode==='buy'?'Покупка выполнена':'Продажа выполнена');render();
+};
+$('createCoin').onclick=()=>{
+ let name=$('newName').value.trim(),ticker=$('newTicker').value.trim().toUpperCase(),price=Number($('newPrice').value),supply=Number($('newSupply').value);
+ if(!name||!/^[A-Z0-9]{2,6}$/.test(ticker))return toast('Проверьте название и тикер (2–6 символов)');
+ if(coins.some(c=>c.ticker===ticker))return toast('Такой тикер уже существует');
+ if(coins.filter(c=>c.created).length>=3)return toast('Достигнут лимит: 3 созданные монеты');
+ if(!Number.isFinite(price)||price<.01||price>10000||!Number.isInteger(supply)||supply<1000||supply>1000000)return toast('Проверьте цену и количество');
+ let id='CUSTOM_'+ticker;coins.push({id,name,ticker,price,supply,owned:0,created:true,history:[price]});selected=id;$('newName').value='';$('newTicker').value='';$('newPrice').value='';$('newSupply').value='';toast('Монета '+ticker+' добавлена на рынок');render();
+};
+function drawChart(c){let canvas=$('chart'),ctx=canvas.getContext('2d'),w=canvas.clientWidth,h=canvas.clientHeight,dpr=window.devicePixelRatio||1;canvas.width=w*dpr;canvas.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);let vals=c.history.slice(-40);if(vals.length<2)vals=[vals[0],vals[0]*1.001];let min=Math.min(...vals)*.995,max=Math.max(...vals)*1.005,range=max-min||1;ctx.strokeStyle='#253544';ctx.lineWidth=1;for(let i=1;i<4;i++){let y=h*i/4;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}ctx.beginPath();vals.forEach((v,i)=>{let x=i/(vals.length-1)*w,y=h-(v-min)/range*(h-10)-5;i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.strokeStyle=vals[vals.length-1]>=vals[0]?'#20d69a':'#ff647c';ctx.lineWidth=2;ctx.stroke();ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();ctx.fillStyle='rgba(32,214,154,.08)';ctx.fill()}
+function tick(){coins.forEach(c=>{let volatility=c.created?.018:.009;let drift=(Math.random()-.49)*volatility;let marketPressure=Math.max(-.004,Math.min(.004,(Math.random()-.5)*.008));c.price=Math.max(.0001,c.price*(1+drift+marketPressure));c.history.push(c.price);if(c.history.length>120)c.history.shift()});render()}
+window.addEventListener('resize',()=>drawChart(current()));render();setInterval(tick,4500);
+</script>
+</body></html>
